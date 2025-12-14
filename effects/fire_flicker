@@ -1,0 +1,95 @@
+# Fire flicker effect, creates yellow/orange/red bars and make them transition to the next color 
+
+      - addressable_lambda:
+          name: "Fire Flicker Bars"
+          update_interval: 16ms  # ~60fps for smooth transitions
+          lambda: |-
+            const int bar_width = 5;
+            const int transition_ms = 1500;
+            const int update_interval_ms = 16;
+            const float transition_steps = (float)transition_ms / update_interval_ms;
+            
+            int num_bars = it.size() / bar_width;
+            
+            static std::vector<int> bar_delays;
+            static std::vector<int> bar_colors;
+            static std::vector<float> bar_transition;
+            
+            if (initial_run) {
+              bar_delays.resize(num_bars);
+              bar_colors.resize(num_bars);
+              bar_transition.resize(num_bars);
+              
+              // Initialize each bar with random delays and colors
+              for (int i = 0; i < num_bars; i++) {
+                bar_delays[i] = random(0, (int)transition_steps);
+                bar_colors[i] = random(0, 3);
+                bar_transition[i] = 1.0;  // Start fully transitioned
+              }
+            }
+            
+            // Clear strip
+            it.all() = Color(0, 0, 0);
+            
+            // Update each 5-LED bar
+            for (int bar = 0; bar < num_bars; bar++) {
+              // Decrement delay counter
+              if (bar_delays[bar] > 0) {
+                bar_delays[bar]--;
+              } else {
+                // Check if transition is complete
+                if (bar_transition[bar] >= 1.0) {
+                  // Start new transition to next color
+                  bar_colors[bar] = (bar_colors[bar] + 1) % 3;
+                  bar_transition[bar] = 0.0;
+                  // New random delay for next cycle (0-1500ms worth of steps)
+                  bar_delays[bar] = random(0, (int)transition_steps);
+                }
+              }
+              
+              // Advance transition progress smoothly over 1500ms
+              if (bar_transition[bar] < 1.0) {
+                bar_transition[bar] += (1.0 / transition_steps);
+                if (bar_transition[bar] > 1.0) bar_transition[bar] = 1.0;
+              }
+              
+              // Define colors: 0=red, 1=orange, 2=yellow
+              Color from_color, to_color;
+              if (bar_colors[bar] == 0) {
+                from_color = Color(255, 0, 0);      // Red
+                to_color = Color(255, 100, 0);      // to Orange
+              } else if (bar_colors[bar] == 1) {
+                from_color = Color(255, 100, 0);    // Orange
+                to_color = Color(255, 200, 0);      // to Yellow
+              } else {
+                from_color = Color(255, 200, 0);    // Yellow
+                to_color = Color(255, 0, 0);        // to Red
+              }
+              
+              // Smooth gradient interpolation with ease-in-out curve
+              float t = bar_transition[bar];
+              // Apply ease-in-out for more natural transition
+              t = t * t * (3.0 - 2.0 * t);
+              
+              Color current_color = Color(
+                from_color.r + (to_color.r - from_color.r) * t,
+                from_color.g + (to_color.g - from_color.g) * t,
+                0
+              );
+              
+              // Add flicker intensity variation
+              int flicker = random(220, 255);
+              current_color = Color(
+                (current_color.r * flicker) / 255,
+                (current_color.g * flicker) / 255,
+                0
+              );
+              
+              // Set the 5 LEDs for this bar
+              for (int i = 0; i < bar_width; i++) {
+                int led_index = bar * bar_width + i;
+                if (led_index < it.size()) {
+                  it[led_index] = current_color;
+                }
+              }
+            }
