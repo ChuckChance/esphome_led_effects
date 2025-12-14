@@ -1,53 +1,53 @@
 # Create random color bars that transition each to another random color over and over
 
-      - addressable_lambda:
-          name: "Random color bars"
-          update_interval: 16ms
-          lambda: |-
-            static uint32_t last_change = 0;
-            static std::vector<Color> current_colors;
-            static std::vector<Color> target_colors;
-            static bool initialized = false;
-            
-            const int bar_width = 5;
-            const uint32_t change_interval = 2000; // 3 seconds in ms
-            const float transition_speed = 0.002; // Adjust for smoother/faster transitions
-            
-            // Initialize on first run
-            if (initial_run || !initialized) {
-              current_colors.clear();
-              target_colors.clear();
-              int num_bars = (it.size() + bar_width - 1) / bar_width;
-              for (int i = 0; i < num_bars; i++) {
-                Color random_color = Color::random_color();
-                current_colors.push_back(random_color);
-                target_colors.push_back(random_color);
-              }
-              last_change = esphome::millis();
-              initialized = true;
-            }
-            
-            uint32_t now = esphome::millis();
-            
-            // Generate new target colors every 3 seconds
-            if (now - last_change >= change_interval) {
-              for (int i = 0; i < target_colors.size(); i++) {
-                target_colors[i] = Color::random_color();
-              }
-              last_change = now;
-            }
-            
-            // Smooth transition from current to target colors
-            for (int i = 0; i < current_colors.size(); i++) {
-              current_colors[i].r += (target_colors[i].r - current_colors[i].r) * transition_speed * 16;
-              current_colors[i].g += (target_colors[i].g - current_colors[i].g) * transition_speed * 16;
-              current_colors[i].b += (target_colors[i].b - current_colors[i].b) * transition_speed * 16;
-            }
-            
-            // Apply colors to LED bars
-            for (int i = 0; i < it.size(); i++) {
-              int bar_index = i / bar_width;
-              if (bar_index < current_colors.size()) {
-                it[i] = current_colors[bar_index];
-              }
-            }
+addressable_lambda:
+  name: "Random color bars"
+  update_interval: 16ms
+  lambda: |-
+    static uint32_t last_change = 0;
+    static std::vector<Color> current_colors;
+    static std::vector<Color> target_colors;
+    static bool initialized = false;
+    
+    const int bar_width = 5;
+    const uint32_t change_interval = 2000; // 3 seconds in ms
+    const float transition_speed = 0.002; // Adjust for smoother/faster transitions
+    
+    // Initialize on first run
+    if (initial_run || !initialized) {
+      current_colors.clear();
+      target_colors.clear();
+      int num_bars = (it.size() + bar_width - 1) / bar_width;
+      for (int i = 0; i < num_bars; i++) {
+        Color random_color = Color::random_color();
+        current_colors.push_back(random_color);
+        target_colors.push_back(random_color);
+      }
+      last_change = esphome::millis();
+      initialized = true;
+    }
+    
+    uint32_t now = esphome::millis();
+    
+    // Generate new target colors every 3 seconds
+    if (now - last_change >= change_interval) {
+      for (int i = 0; i < target_colors.size(); i++) {
+        target_colors[i] = Color::random_color();
+      }
+      last_change = now;
+    }
+    
+    // Smooth transition from current to target colors
+    for (int i = 0; i < current_colors.size(); i++) {
+      current_colors[i].r += (target_colors[i].r - current_colors[i].r) * transition_speed * 16;
+      current_colors[i].g += (target_colors[i].g - current_colors[i].g) * transition_speed * 16;
+      current_colors[i].b += (target_colors[i].b - current_colors[i].b) * transition_speed * 16;
+    }
+    
+    // Apply colors to LED bars
+    for (int i = 0; i < it.size(); i++) {
+      int bar_index = i / bar_width;
+      if (bar_index < current_colors.size()) {
+        it[i] = current_colors[bar_index];
+      }
+    }
